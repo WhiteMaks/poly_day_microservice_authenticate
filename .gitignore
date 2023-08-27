@@ -2,4 +2,7 @@
 .database
 
 .bin
-autogenerate
+
+autogenerate/*/db.go
+autogenerate/*/models.go
+autogenerate/*/*.sql.go
