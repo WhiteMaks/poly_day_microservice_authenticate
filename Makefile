@@ -3,5 +3,5 @@ autogenerate-code:
 
 test:
 	docker-compose up -d
-	timeout 60s
+	timeout 60
 	go clean -testcache && go test -cover -v ./...
