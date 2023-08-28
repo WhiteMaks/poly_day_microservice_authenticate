@@ -1,2 +1,8 @@
 .idea
+.database
+
 .bin
+
+autogenerate/*/db.go
+autogenerate/*/models.go
+autogenerate/*/*.sql.go

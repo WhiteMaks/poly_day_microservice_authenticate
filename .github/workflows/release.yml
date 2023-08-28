@@ -1,0 +1,40 @@
+name: Poly Day release microservice Gateway
+
+on:
+  push:
+    branches: [ "release_**" ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_NAME: ${{vars.PROJECT_NAME}}
+      MICROSERVICE_NAME: ${{vars.MICROSERVICE_NAME}}
+      APP_NAME: ${{vars.PROJECT_NAME}}_${{vars.MICROSERVICE_NAME}}
+
+    steps:
+      - name: Preparing git branch
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Autogenerate
+        run: make autogenerate-code
+
+      - name: Up test environment
+        run: make up-test-environment
+
+      - name: Migrate database
+        run: make migrate-db
+
+      - name: Unit test
+        run: make test
+
+      - name: Build binary
+        run: make build

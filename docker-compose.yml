@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+
+  postgresql:
+    image: postgres:14.2-alpine
+    container_name: poly_day_microservice_authenticate_postgresql
+    environment:
+      POSTGRES_DB: "authenticate"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "password"
+      PGDATA: "/var/lib/postgresql/data/.database"
+    volumes:
+      - .:/var/lib/postgresql/data
+    ports:
+      - "15432:5432"

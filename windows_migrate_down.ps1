@@ -1,0 +1,1 @@
+docker run --rm -v ${PWD}/database/migrations:/migrations --network host migrate/migrate -path=/migrations/ -database postgres://user:password@localhost:15432/authenticate?sslmode=disable down 1
