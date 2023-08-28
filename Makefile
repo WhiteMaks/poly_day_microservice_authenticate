@@ -1,7 +1,7 @@
 install-dependencies:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
-autogenerate:
+autogenerate-code:
 	docker run --rm -v $(pwd):/src -w /src kjconroy/sqlc generate
 
 test:
