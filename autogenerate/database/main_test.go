@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	DB_DRIVER = "postgres"
-	DB_SOURCE = "postgres://user:password@localhost:15432/authenticate?sslmode=disable"
+	DbDriver = "postgres"
+	DbSource = "postgres://user:password@localhost:15432/authenticate?sslmode=disable"
 )
 
 var alphabet = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -34,7 +34,7 @@ func randomString(characters int) string {
 }
 
 func TestMain(m *testing.M) {
-	connection, err := sql.Open(DB_DRIVER, DB_SOURCE)
+	connection, err := sql.Open(DbDriver, DbSource)
 	if err != nil {
 		log.Fatalf("error connecting to db: %v", err)
 	}
