@@ -3,7 +3,6 @@ install-dependencies:
 
 autogenerate:
 	sqlc generate
-	sleep 10s
 
 test:
 	go clean -testcache && go test -cover -v ./...
