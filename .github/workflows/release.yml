@@ -28,7 +28,7 @@ jobs:
         run: make install-dependencies
 
       - name: Autogenerate
-        run: sqlc generate && sleep 10s && ls autogenerate/database
+        run: make autogenerate && sleep 10s && ls autogenerate/database
 
       - name: Unit tests
         run: make test
