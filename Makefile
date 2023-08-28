@@ -10,3 +10,6 @@ migrate-db:
 
 test:
 	go clean -testcache && go test -cover -v ./...
+
+build:
+	echo "Building"

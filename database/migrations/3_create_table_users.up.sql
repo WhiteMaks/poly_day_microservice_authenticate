@@ -6,4 +6,4 @@ CREATE TABLE root.users(
     created_at      timestamptz     NOT NULL DEFAULT now()
 );
 
-ALTER TABLE root.users ADD CONSTRAINT FK_user_role_id FOREIGN KEY (role_id) REFERENCES root.role (id);
+ALTER TABLE root.users ADD CONSTRAINT FK_user_role_id FOREIGN KEY (role_id) REFERENCES root.roles (id);
