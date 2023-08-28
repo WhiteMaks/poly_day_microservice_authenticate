@@ -27,6 +27,12 @@ jobs:
       - name: Autogenerate
         run: make autogenerate-code
 
+      - name: Up test environment
+        run: make up-test-environment
+
+      - name: Migrate database
+        run: make migrate-db
+
       - name: Unit test
         run: make test
 
