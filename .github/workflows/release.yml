@@ -24,13 +24,10 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: Install dependencies
-        run: make install-dependencies
-
       - name: Autogenerate
-        run: make autogenerate && sleep 10s && ls autogenerate/database
+        run: make autogenerate
 
-      - name: Unit tests
+      - name: Unit test
         run: make test
 
       - name: Build binary
