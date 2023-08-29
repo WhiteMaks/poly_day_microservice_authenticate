@@ -13,10 +13,10 @@ type createUserRequest struct {
 }
 
 type createUserResponse struct {
-	id int64
+	Id int64 `json:"id"`
 }
 
-func (service *Service) createUser(ctx *gin.Context) {
+func (microservice *Microservice) createUser(ctx *gin.Context) {
 	var requestBody createUserRequest
 
 	err := ctx.ShouldBindJSON(&requestBody)
@@ -25,13 +25,13 @@ func (service *Service) createUser(ctx *gin.Context) {
 		return
 	}
 
-	userExist := userByUsernameExistInDb(service, ctx, requestBody.Username)
+	userExist := userByUsernameExistInDb(microservice, ctx, requestBody.Username)
 	if userExist {
 		ctx.JSON(http.StatusConflict, errorResponse(errors.New("user with the same name already exists")))
 		return
 	}
 
-	dbRole, err := service.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
+	dbRole, err := microservice.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -43,20 +43,20 @@ func (service *Service) createUser(ctx *gin.Context) {
 		RoleID:   dbRole.ID,
 	}
 
-	dbUser, err := service.store.CreateUser(ctx, sqlUser)
+	dbUser, err := microservice.store.CreateUser(ctx, sqlUser)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	response := createUserResponse{
-		id: dbUser.ID,
+		Id: dbUser.ID,
 	}
 
 	ctx.JSON(http.StatusCreated, response)
 }
 
-func userByUsernameExistInDb(service *Service, ctx *gin.Context, username string) bool {
+func userByUsernameExistInDb(service *Microservice, ctx *gin.Context, username string) bool {
 	_, err := service.store.GetUserByUsername(ctx, username)
 	if err != nil {
 		return false

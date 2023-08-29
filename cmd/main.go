@@ -21,10 +21,10 @@ func main() {
 	}
 
 	store := database.NewStore(connection)
-	service := microservice.NewService(store)
+	ms := microservice.NewMicroservice(store)
 
-	err = service.Start("localhost:8080")
+	err = ms.Start("localhost:8080")
 	if err != nil {
-		log.Fatalf("error start service: %v", err)
+		log.Fatalf("error start microservice: %v", err)
 	}
 }

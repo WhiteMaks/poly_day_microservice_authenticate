@@ -16,21 +16,11 @@ const (
 	DbSource = "postgres://user:password@localhost:15432/authenticate?sslmode=disable"
 )
 
-var alphabet = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-
 var testQueries *Queries
-var random *rand.Rand
+var _ *rand.Rand
 
 func init() {
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
-
-func randomString(characters int) string {
-	b := make([]rune, characters)
-	for i := range b {
-		b[i] = alphabet[rand.Intn(len(alphabet))]
-	}
-	return string(b)
+	_ = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 func TestMain(m *testing.M) {
