@@ -56,8 +56,6 @@ func checkResponseCreateUser(t *testing.T, requestBody createUserRequest, respon
 	err = json.Unmarshal(data, &userResponse)
 	assert.NoError(t, err, "No error must be")
 
-	log.Println(string(data))
-
 	assert.Equal(t, userResponse.Id, dbUser.ID, "user [ id ] must be equal")
 	assert.Equal(t, requestBody.Username, dbUser.Username, "user [ username ] must be equal")
 	assert.Equal(t, requestBody.Password, dbUser.Password, "user [ password ] must be equal")
