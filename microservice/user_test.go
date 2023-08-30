@@ -132,6 +132,8 @@ func TestMicroservice_CreateUser_BudRequest_WrongJsonBody(t *testing.T) {
 		{request: []byte("{\"password\":\"123\"}")},
 		{request: []byte("{\"passwor\":\"123\", \"usernam\":\"123\"}")},
 		{request: []byte("{\"password\":\"123\", \"username\":\"12345678901234567890123456\"}")},
+		{request: []byte("{\"password\":\"123\", \"username\":\"\"}")},
+		{request: []byte("{\"password\":\"\", \"username\":\"123\"}")},
 	}
 
 	for _, requestStruct := range requests {
