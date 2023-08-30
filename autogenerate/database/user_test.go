@@ -3,11 +3,12 @@ package database
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	"poly_day_microservice_authenticate/utils"
 	"testing"
 )
 
 func TestQueries_CreateUser(t *testing.T) {
-	randomUser := generateRandomUser()
+	randomUser := generateRandomDBUserParams()
 
 	actualUser, err := testQueries.CreateUser(context.Background(), randomUser)
 	assert.NoError(t, err, "No error must be")
@@ -22,7 +23,7 @@ func TestQueries_CreateUser(t *testing.T) {
 }
 
 func TestQueries_CreateUser_WithNotUniqueName(t *testing.T) {
-	existUser := generateRandomUser()
+	existUser := generateRandomDBUserParams()
 
 	_, err := testQueries.CreateUser(context.Background(), existUser)
 	assert.NoError(t, err, "No error must be")
@@ -33,7 +34,7 @@ func TestQueries_CreateUser_WithNotUniqueName(t *testing.T) {
 }
 
 func TestQueries_GetUserByUsername(t *testing.T) {
-	randomUser := generateRandomUser()
+	randomUser := generateRandomDBUserParams()
 
 	expectedUser, err := testQueries.CreateUser(context.Background(), randomUser)
 	assert.NoError(t, err, "No error must be")
@@ -45,7 +46,7 @@ func TestQueries_GetUserByUsername(t *testing.T) {
 }
 
 func TestQueries_GetUserByUsername_WithNotExistValue(t *testing.T) {
-	randomUser := generateRandomUser()
+	randomUser := generateRandomDBUserParams()
 
 	notExistUser, err := testQueries.GetUserByUsername(context.Background(), randomUser.Username)
 	assert.Error(t, err, "Error must be")
@@ -62,10 +63,10 @@ func checkUsers(t *testing.T, expectedUser RootUser, actualUser RootUser) {
 	assert.Equal(t, expectedUser.RoleID, actualUser.RoleID, "User [ role_id ] must be equal")
 }
 
-func generateRandomUser() CreateUserParams {
+func generateRandomDBUserParams() CreateUserParams {
 	return CreateUserParams{
-		Username: randomString(25),
-		Password: randomString(256),
+		Username: utils.RandomString(25),
+		Password: utils.RandomString(256),
 		RoleID:   expectedRoles[1].ID,
 	}
 }

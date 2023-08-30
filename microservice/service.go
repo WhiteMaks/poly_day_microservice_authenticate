@@ -5,25 +5,29 @@ import (
 	"poly_day_microservice_authenticate/autogenerate/database"
 )
 
-type Service struct {
-	store  *database.Store
+const (
+	PathCreateUser = "/create_user"
+)
+
+type Microservice struct {
+	store  database.Store
 	router *gin.Engine
 }
 
-func NewService(store *database.Store) *Service {
-	service := &Service{}
+func NewMicroservice(store database.Store) *Microservice {
+	microservice := &Microservice{}
 
-	router := gin.Default()
-	router.POST("/create_user", service.createUser)
+	router := gin.New()
+	router.POST(PathCreateUser, microservice.createUser)
 
-	service.store = store
-	service.router = router
+	microservice.store = store
+	microservice.router = router
 
-	return service
+	return microservice
 }
 
-func (service *Service) Start(address string) error {
-	return service.router.Run(address)
+func (microservice *Microservice) Start(address string) error {
+	return microservice.router.Run(address)
 }
 
 func errorResponse(err error) gin.H {

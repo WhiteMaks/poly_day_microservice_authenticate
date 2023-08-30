@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"github.com/gin-gonic/gin"
 	"log"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/microservice"
@@ -15,16 +16,18 @@ const (
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
+
 	connection, err := sql.Open(DbDriver, DbSource)
 	if err != nil {
 		log.Fatalf("error connecting to db: %v", err)
 	}
 
 	store := database.NewStore(connection)
-	service := microservice.NewService(store)
+	ms := microservice.NewMicroservice(store)
 
-	err = service.Start("localhost:8080")
+	err = ms.Start("localhost:8080")
 	if err != nil {
-		log.Fatalf("error start service: %v", err)
+		log.Fatalf("error start microservice: %v", err)
 	}
 }

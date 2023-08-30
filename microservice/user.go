@@ -1,23 +1,24 @@
 package microservice
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
 )
 
-type createUserRequest struct {
-	Username string `json:"username" biding:"required"`
-	Password string `json:"password" biding:"required"`
+type CreateUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
-type createUserResponse struct {
-	id int64
+type CreateUserResponse struct {
+	Id int64 `json:"id"`
 }
 
-func (service *Service) createUser(ctx *gin.Context) {
-	var requestBody createUserRequest
+func (microservice *Microservice) createUser(ctx *gin.Context) {
+	var requestBody CreateUserRequest
 
 	err := ctx.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -25,13 +26,19 @@ func (service *Service) createUser(ctx *gin.Context) {
 		return
 	}
 
-	userExist := userByUsernameExistInDb(service, ctx, requestBody.Username)
-	if userExist {
-		ctx.JSON(http.StatusConflict, errorResponse(errors.New("user with the same name already exists")))
+	userExist, err := userByUsernameExistInDb(microservice, ctx, requestBody.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	dbRole, err := service.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
+	if userExist {
+		errorMessage := errors.New("user with the same name already exists")
+		ctx.JSON(http.StatusConflict, errorResponse(errorMessage))
+		return
+	}
+
+	dbRole, err := microservice.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -43,24 +50,24 @@ func (service *Service) createUser(ctx *gin.Context) {
 		RoleID:   dbRole.ID,
 	}
 
-	dbUser, err := service.store.CreateUser(ctx, sqlUser)
+	dbUser, err := microservice.store.CreateUser(ctx, sqlUser)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	response := createUserResponse{
-		id: dbUser.ID,
+	response := CreateUserResponse{
+		Id: dbUser.ID,
 	}
 
 	ctx.JSON(http.StatusCreated, response)
 }
 
-func userByUsernameExistInDb(service *Service, ctx *gin.Context, username string) bool {
+func userByUsernameExistInDb(service *Microservice, ctx *gin.Context, username string) (bool, error) {
 	_, err := service.store.GetUserByUsername(ctx, username)
-	if err != nil {
-		return false
+	if err != nil && err == sql.ErrNoRows {
+		return false, nil
 	}
 
-	return true
+	return true, err
 }
