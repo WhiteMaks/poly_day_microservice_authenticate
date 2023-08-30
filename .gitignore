@@ -7,3 +7,5 @@ autogenerate/*/db.go
 autogenerate/*/models.go
 autogenerate/*/querier.go
 autogenerate/*/*.sql.go
+
+autogenerate/*/mock

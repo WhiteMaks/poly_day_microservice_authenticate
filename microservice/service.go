@@ -17,7 +17,7 @@ type Microservice struct {
 func NewMicroservice(store database.Store) *Microservice {
 	microservice := &Microservice{}
 
-	router := gin.Default()
+	router := gin.New()
 	router.POST(PathCreateUser, microservice.createUser)
 
 	microservice.store = store

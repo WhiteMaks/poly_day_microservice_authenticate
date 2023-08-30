@@ -13,3 +13,7 @@ func RandomString(characters int) string {
 	}
 	return string(b)
 }
+
+func RandomInt(from int64, to int64) int64 {
+	return rand.Int63n(to-from) + from
+}

@@ -1,23 +1,24 @@
 package microservice
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
 )
 
-type createUserRequest struct {
-	Username string `json:"username" biding:"required"`
-	Password string `json:"password" biding:"required"`
+type CreateUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
-type createUserResponse struct {
+type CreateUserResponse struct {
 	Id int64 `json:"id"`
 }
 
 func (microservice *Microservice) createUser(ctx *gin.Context) {
-	var requestBody createUserRequest
+	var requestBody CreateUserRequest
 
 	err := ctx.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -25,9 +26,15 @@ func (microservice *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
-	userExist := userByUsernameExistInDb(microservice, ctx, requestBody.Username)
+	userExist, err := userByUsernameExistInDb(microservice, ctx, requestBody.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
 	if userExist {
-		ctx.JSON(http.StatusConflict, errorResponse(errors.New("user with the same name already exists")))
+		errorMessage := errors.New("user with the same name already exists")
+		ctx.JSON(http.StatusConflict, errorResponse(errorMessage))
 		return
 	}
 
@@ -49,18 +56,18 @@ func (microservice *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
-	response := createUserResponse{
+	response := CreateUserResponse{
 		Id: dbUser.ID,
 	}
 
 	ctx.JSON(http.StatusCreated, response)
 }
 
-func userByUsernameExistInDb(service *Microservice, ctx *gin.Context, username string) bool {
+func userByUsernameExistInDb(service *Microservice, ctx *gin.Context, username string) (bool, error) {
 	_, err := service.store.GetUserByUsername(ctx, username)
-	if err != nil {
-		return false
+	if err != nil && err == sql.ErrNoRows {
+		return false, nil
 	}
 
-	return true
+	return true, err
 }

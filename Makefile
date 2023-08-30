@@ -1,5 +1,13 @@
+install-dependencies:
+	go install github.com/golang/mock/mockgen@v1.6.0
+
 autogenerate-code:
 	docker run --rm -v $(shell pwd):/src -w /src kjconroy/sqlc generate
+
+autogenerate-mock:
+	mockgen --package mockdatabase --destination autogenerate/database/mock/store.go poly_day_microservice_authenticate/autogenerate/database Store
+
+autogenerate: autogenerate-code autogenerate-mock
 
 up-test-environment:
 	docker-compose up -d
@@ -13,3 +21,5 @@ test:
 
 build:
 	echo "Building"
+
+.PHONY: build test migrate-db up-test-environment autogenerate-mock autogenerate-code install-dependencies
