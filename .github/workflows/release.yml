@@ -1,4 +1,4 @@
-name: Poly Day release microservice Gateway
+name: Poly Day release microservice authenticate
 
 on:
   push:
