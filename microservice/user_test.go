@@ -26,14 +26,15 @@ func TestMicroservice_CreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dbUser := generateRandomDBUser()
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
+	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
 	store := mockdatabase.NewMockStore(ctrl)
+
 	testMicroserviceCreateUserMockDB(store, dbUser)
 
 	ms := NewMicroservice(store)
 	recorder := httptest.NewRecorder()
-
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -51,14 +52,15 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetUserByUsername(t *testi
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dbUser := generateRandomDBUser()
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorGetUserByUsernameMockDB(store, dbUser)
 
 	ms := NewMicroservice(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser)
+	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -74,14 +76,15 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetRoleByName(t *testing.T
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dbUser := generateRandomDBUser()
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorGetRoleByNameMockDB(store, dbUser)
 
 	ms := NewMicroservice(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser)
+	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -97,14 +100,15 @@ func TestMicroservice_CreateUser_InternalError_ErrorInCreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dbUser := generateRandomDBUser()
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorCreateUserMockDB(store, dbUser)
 
 	ms := NewMicroservice(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser)
+	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -131,6 +135,10 @@ func TestMicroservice_CreateUser_BudRequest_WrongJsonBody(t *testing.T) {
 		{request: []byte("{\"username\":\"123\"}")},
 		{request: []byte("{\"password\":\"123\"}")},
 		{request: []byte("{\"passwor\":\"123\", \"usernam\":\"123\"}")},
+		{request: []byte("{\"passwor\":\"123\"; \"usernam\":\"123\"}")},
+		{request: []byte("{\"password\":\"123\", \"username\":\"12345678901234567890123456\"}")},
+		{request: []byte("{\"password\":\"123\", \"username\":\"\"}")},
+		{request: []byte("{\"password\":\"\", \"username\":\"123\"}")},
 	}
 
 	for _, requestStruct := range requests {
@@ -146,14 +154,15 @@ func TestMicroservice_CreateUser_Conflict_UserExist(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dbUser := generateRandomDBUser()
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserConflictUserExistMockDB(store, dbUser)
 
 	ms := NewMicroservice(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser)
+	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -183,13 +192,7 @@ func testMicroserviceCreateUserMockDB(store *mockdatabase.MockStore, dbUser data
 	store.EXPECT().
 		CreateUser(
 			gomock.Any(),
-			gomock.Eq(
-				database.CreateUserParams{
-					Username: dbUser.Username,
-					Password: dbUser.Password,
-					RoleID:   dbUser.RoleID,
-				},
-			),
+			gomock.Any(),
 		).Times(1).
 		Return(dbUser, nil)
 }
@@ -237,13 +240,7 @@ func testMicroserviceCreateUserInternalErrorErrorCreateUserMockDB(store *mockdat
 	store.EXPECT().
 		CreateUser(
 			gomock.Any(),
-			gomock.Eq(
-				database.CreateUserParams{
-					Username: dbUser.Username,
-					Password: dbUser.Password,
-					RoleID:   dbUser.RoleID,
-				},
-			),
+			gomock.Any(),
 		).Times(1).
 		Return(database.RootUser{}, errors.New("unexpected error"))
 }
@@ -267,21 +264,23 @@ func checkResponseCreateUser(t *testing.T, requestBody CreateUserRequest, respon
 
 	assert.Equal(t, userResponse.Id, dbUser.ID, "user [ id ] must be equal")
 	assert.Equal(t, requestBody.Username, dbUser.Username, "user [ username ] must be equal")
-	assert.Equal(t, requestBody.Password, dbUser.Password, "user [ password ] must be equal")
+	assert.NoError(t, utils.PasswordEquality(requestBody.Password, dbUser.Password), "user [ password ] must be equal")
 }
 
-func generateCreateUserResponseFromDBRecord(dbUser database.RootUser) CreateUserRequest {
+func generateCreateUserResponseFromDBRecord(dbUser database.RootUser, password string) CreateUserRequest {
 	return CreateUserRequest{
 		Username: dbUser.Username,
-		Password: dbUser.Password,
+		Password: password,
 	}
 }
 
-func generateRandomDBUser() database.RootUser {
+func generateRandomDBUser(password string) database.RootUser {
+	hashedPassword, _ := utils.HashPassword(password)
+
 	return database.RootUser{
 		ID:        utils.RandomInt(0, 10000),
 		Username:  utils.RandomString(25),
-		Password:  utils.RandomString(256),
+		Password:  hashedPassword,
 		RoleID:    developerRole.ID,
 		CreatedAt: time.Now(),
 	}

@@ -1,4 +1,4 @@
-name: Poly Day release preparation microservice Gateway
+name: Poly Day release preparation microservice authenticate
 
 on:
   pull_request:

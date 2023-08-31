@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	PathCreateUser = "/create_user"
+	PathCreateUser = "/user/create"
 )
 
 type Microservice struct {
