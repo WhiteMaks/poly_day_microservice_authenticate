@@ -6,11 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
+	"poly_day_microservice_authenticate/utils"
 )
 
 type CreateUserRequest struct {
 	Username string `json:"username" binding:"required,max=25"`
-	Password string `json:"password" binding:"required"`
+	Password string `json:"password" binding:"required,max=72"`
 }
 
 type CreateUserResponse struct {
@@ -44,9 +45,15 @@ func (microservice *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
+	hashedPassword, err := utils.HashPassword(requestBody.Password)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
 	sqlUser := database.CreateUserParams{
 		Username: requestBody.Username,
-		Password: requestBody.Password,
+		Password: hashedPassword,
 		RoleID:   dbRole.ID,
 	}
 
