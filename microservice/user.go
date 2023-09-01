@@ -18,7 +18,7 @@ type CreateUserResponse struct {
 	Id int64 `json:"id"`
 }
 
-func (microservice *Microservice) createUser(ctx *gin.Context) {
+func (ms *Microservice) createUser(ctx *gin.Context) {
 	var requestBody CreateUserRequest
 
 	err := ctx.ShouldBindJSON(&requestBody)
@@ -27,7 +27,7 @@ func (microservice *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
-	userExist, err := userByUsernameExistInDb(microservice, ctx, requestBody.Username)
+	userExist, err := userByUsernameExistInDb(ms, ctx, requestBody.Username)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -39,7 +39,7 @@ func (microservice *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
-	dbRole, err := microservice.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
+	dbRole, err := ms.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -57,7 +57,7 @@ func (microservice *Microservice) createUser(ctx *gin.Context) {
 		RoleID:   dbRole.ID,
 	}
 
-	dbUser, err := microservice.store.CreateUser(ctx, sqlUser)
+	dbUser, err := ms.store.CreateUser(ctx, sqlUser)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

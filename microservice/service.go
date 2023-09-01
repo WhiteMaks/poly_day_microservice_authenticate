@@ -14,20 +14,20 @@ type Microservice struct {
 	router *gin.Engine
 }
 
-func NewMicroservice(store database.Store) *Microservice {
-	microservice := &Microservice{}
+func NewMs(store database.Store) *Microservice {
+	ms := &Microservice{}
 
 	router := gin.New()
-	router.POST(PathCreateUser, microservice.createUser)
+	router.POST(PathCreateUser, ms.createUser)
 
-	microservice.store = store
-	microservice.router = router
+	ms.store = store
+	ms.router = router
 
-	return microservice
+	return ms
 }
 
-func (microservice *Microservice) Start(address string) error {
-	return microservice.router.Run(address)
+func (ms *Microservice) Start(address string) error {
+	return ms.router.Run(address)
 }
 
 func errorResponse(err error) gin.H {

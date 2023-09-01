@@ -24,7 +24,7 @@ func main() {
 	}
 
 	store := database.NewStore(connection)
-	ms := microservice.NewMicroservice(store)
+	ms := microservice.NewMs(store)
 
 	err = ms.Start("localhost:8080")
 	if err != nil {

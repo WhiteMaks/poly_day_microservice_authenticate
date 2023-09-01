@@ -33,7 +33,7 @@ func TestMicroservice_CreateUser(t *testing.T) {
 
 	testMicroserviceCreateUserMockDB(store, dbUser)
 
-	ms := NewMicroservice(store)
+	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
 	requestBody, err := json.Marshal(createUserBody)
@@ -57,7 +57,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetUserByUsername(t *testi
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorGetUserByUsernameMockDB(store, dbUser)
 
-	ms := NewMicroservice(store)
+	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
@@ -81,7 +81,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetRoleByName(t *testing.T
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorGetRoleByNameMockDB(store, dbUser)
 
-	ms := NewMicroservice(store)
+	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
@@ -105,7 +105,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInCreateUser(t *testing.T) {
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorCreateUserMockDB(store, dbUser)
 
-	ms := NewMicroservice(store)
+	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
@@ -125,7 +125,7 @@ func TestMicroservice_CreateUser_BudRequest_WrongJsonBody(t *testing.T) {
 	defer ctrl.Finish()
 
 	store := mockdatabase.NewMockStore(ctrl)
-	ms := NewMicroservice(store)
+	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
 	requests := []struct {
@@ -159,7 +159,7 @@ func TestMicroservice_CreateUser_Conflict_UserExist(t *testing.T) {
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserConflictUserExistMockDB(store, dbUser)
 
-	ms := NewMicroservice(store)
+	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
