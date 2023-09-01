@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/utils"
+	"time"
 )
 
 type CreateUserRequest struct {
@@ -18,6 +19,58 @@ type CreateUserResponse struct {
 	Id int64 `json:"id"`
 }
 
+type LoginUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginUserResponse struct {
+	Token string `json:"token"`
+}
+
+var ErrAuthorizationDataNotValid = errors.New("authorization data is not correct")
+
+func (ms *Microservice) loginUser(ctx *gin.Context) {
+	var requestBody LoginUserRequest
+
+	err := ctx.ShouldBindJSON(&requestBody)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	dbUser, err := ms.store.GetUserByUsername(ctx, requestBody.Username)
+
+	userExist, err := checkExistDBRowError(err)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if !userExist {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(ErrAuthorizationDataNotValid))
+		return
+	}
+
+	err = utils.PasswordEquality(requestBody.Password, dbUser.Password)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(ErrAuthorizationDataNotValid))
+		return
+	}
+
+	token, err := ms.tokenCreator.Create(dbUser.Username, time.Hour*24*7)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	response := LoginUserResponse{
+		Token: token,
+	}
+
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (ms *Microservice) createUser(ctx *gin.Context) {
 	var requestBody CreateUserRequest
 
@@ -27,7 +80,9 @@ func (ms *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
-	userExist, err := userByUsernameExistInDb(ms, ctx, requestBody.Username)
+	_, err = ms.store.GetUserByUsername(ctx, requestBody.Username)
+
+	userExist, err := checkExistDBRowError(err)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -70,8 +125,7 @@ func (ms *Microservice) createUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, response)
 }
 
-func userByUsernameExistInDb(service *Microservice, ctx *gin.Context, username string) (bool, error) {
-	_, err := service.store.GetUserByUsername(ctx, username)
+func checkExistDBRowError(err error) (bool, error) {
 	if err != nil && err == sql.ErrNoRows {
 		return false, nil
 	}
