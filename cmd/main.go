@@ -4,21 +4,22 @@ import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"log"
+	"os"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/microservice"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	DbDriver = "postgres"
-	DbSource = "postgres://user:password@localhost:15432/authenticate?sslmode=disable"
+var (
+	psqlConStr = os.Getenv("POSTGRES_CONNECTING_STRING")
+	appPort    = os.Getenv("APP_PORT")
 )
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 
-	connection, err := sql.Open(DbDriver, DbSource)
+	connection, err := sql.Open("postgres", psqlConStr)
 	if err != nil {
 		log.Fatalf("error connecting to db: %v", err)
 	}
@@ -26,7 +27,7 @@ func main() {
 	store := database.NewStore(connection)
 	ms := microservice.NewMs(store)
 
-	err = ms.Start("localhost:8080")
+	err = ms.Start("localhost:" + appPort)
 	if err != nil {
 		log.Fatalf("error start microservice: %v", err)
 	}
