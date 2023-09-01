@@ -3,10 +3,12 @@ module poly_day_microservice_authenticate
 go 1.21.0
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang/mock v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.8.4
+	golang.org/x/crypto v0.12.0
 )
 
 require (
@@ -31,7 +33,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
