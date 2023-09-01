@@ -41,3 +41,12 @@ jobs:
 
       - name: Build binary
         run: make build
+
+      - name: Login into docker
+        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_ACCESS_TOKEN}}
+
+      - name: Build docker image
+        run: docker build -t ${{secrets.DOCKER_USERNAME}}/poly_day_microservice_authenticate:${{github.ref_name}} . -f docker/Dockerfile
+
+      - name: Push docker tag
+        run: docker push ${{secrets.DOCKER_USERNAME}}/poly_day_microservice_authenticate:${{github.ref_name}}
