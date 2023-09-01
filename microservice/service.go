@@ -3,15 +3,18 @@ package microservice
 import (
 	"github.com/gin-gonic/gin"
 	"poly_day_microservice_authenticate/autogenerate/database"
+	"poly_day_microservice_authenticate/token"
 )
 
 const (
 	PathCreateUser = "/user/create"
+	PathLoginUser  = "/user/login"
 )
 
 type Microservice struct {
-	store  database.Store
-	router *gin.Engine
+	store        database.Store
+	tokenCreator token.Creator
+	router       *gin.Engine
 }
 
 func NewMs(store database.Store) *Microservice {
@@ -19,9 +22,11 @@ func NewMs(store database.Store) *Microservice {
 
 	router := gin.New()
 	router.POST(PathCreateUser, ms.createUser)
+	router.POST(PathLoginUser, ms.loginUser)
 
 	ms.store = store
 	ms.router = router
+	ms.tokenCreator = token.NewJWTCreator("secret_key_for_generate_token")
 
 	return ms
 }
