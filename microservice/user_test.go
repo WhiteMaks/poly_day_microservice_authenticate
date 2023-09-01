@@ -22,13 +22,140 @@ var developerRole = database.RootRole{
 	Name: "ROLE_DEVELOPER",
 }
 
+func TestMicroservice_LoginUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
+	loginUserBody := generateLoginUserRequestFromDBRecord(dbUser, randomPassword)
+	store := mockdatabase.NewMockStore(ctrl)
+
+	testMicroserviceLoginUserMockDB(store, dbUser)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	requestBody, err := json.Marshal(loginUserBody)
+	assert.NoError(t, err, "No error must be")
+
+	request, err := http.NewRequest(http.MethodPost, PathLoginUser, bytes.NewBuffer(requestBody))
+	assert.NoError(t, err, "No error must be")
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusOK, recorder.Code, "response [ status code ] must be equal")
+
+	checkResponseLoginUser(t, recorder.Body)
+}
+
+func TestMicroservice_LoginUser_Unauthorized_WithNotValidPassword(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
+	loginUserBody := generateLoginUserRequestFromDBRecord(dbUser, "not_valid_password")
+	store := mockdatabase.NewMockStore(ctrl)
+
+	testMicroserviceLoginUserMockDB(store, dbUser)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	requestBody, err := json.Marshal(loginUserBody)
+	assert.NoError(t, err, "No error must be")
+
+	request, err := http.NewRequest(http.MethodPost, PathLoginUser, bytes.NewBuffer(requestBody))
+	assert.NoError(t, err, "No error must be")
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code, "response [ status code ] must be equal")
+}
+
+func TestMicroservice_LoginUser_Unauthorized_WithNotValidUsername(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
+	loginUserBody := generateLoginUserRequestFromDBRecord(dbUser, randomPassword)
+	store := mockdatabase.NewMockStore(ctrl)
+
+	testMicroserviceLoginUserUnauthorizedErrorUserNotExistMockDB(store, dbUser)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	requestBody, err := json.Marshal(loginUserBody)
+	assert.NoError(t, err, "No error must be")
+
+	request, err := http.NewRequest(http.MethodPost, PathLoginUser, bytes.NewBuffer(requestBody))
+	assert.NoError(t, err, "No error must be")
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code, "response [ status code ] must be equal")
+}
+
+func TestMicroservice_LoginUser_InternalError_ErrorInGetUserByUsername(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	randomPassword := utils.RandomString(72)
+	dbUser := generateRandomDBUser(randomPassword)
+	loginUserBody := generateLoginUserRequestFromDBRecord(dbUser, randomPassword)
+	store := mockdatabase.NewMockStore(ctrl)
+
+	testMicroserviceLoginUserInternalErrorErrorGetUserByUsernameMockDB(store, dbUser)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	requestBody, err := json.Marshal(loginUserBody)
+	assert.NoError(t, err, "No error must be")
+
+	request, err := http.NewRequest(http.MethodPost, PathLoginUser, bytes.NewBuffer(requestBody))
+	assert.NoError(t, err, "No error must be")
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code, "response [ status code ] must be equal")
+}
+
+func TestMicroservice_LoginUser_BudRequest_WrongJsonBody(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mockdatabase.NewMockStore(ctrl)
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	requests := []struct {
+		request []byte
+	}{
+		{request: []byte{}},
+		{request: []byte("{\"username\":\"123\"}")},
+		{request: []byte("{\"password\":\"123\"}")},
+		{request: []byte("{\"passwor\":\"123\", \"usernam\":\"123\"}")},
+		{request: []byte("{\"passwor\":\"123\"; \"usernam\":\"123\"}")},
+		{request: []byte("{\"password\":\"123\", \"username\":\"\"}")},
+		{request: []byte("{\"password\":\"\", \"username\":\"123\"}")},
+	}
+
+	for _, requestStruct := range requests {
+		request, err := http.NewRequest(http.MethodPost, PathLoginUser, bytes.NewBuffer(requestStruct.request))
+		assert.NoError(t, err, "No error must be")
+
+		ms.router.ServeHTTP(recorder, request)
+		assert.Equal(t, http.StatusBadRequest, recorder.Code, "response [ status code ] must be equal")
+	}
+}
+
 func TestMicroservice_CreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	randomPassword := utils.RandomString(72)
 	dbUser := generateRandomDBUser(randomPassword)
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
+	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
 	store := mockdatabase.NewMockStore(ctrl)
 
 	testMicroserviceCreateUserMockDB(store, dbUser)
@@ -60,7 +187,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetUserByUsername(t *testi
 	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
+	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -84,7 +211,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetRoleByName(t *testing.T
 	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
+	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -108,7 +235,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInCreateUser(t *testing.T) {
 	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
+	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -162,7 +289,7 @@ func TestMicroservice_CreateUser_Conflict_UserExist(t *testing.T) {
 	ms := NewMs(store)
 	recorder := httptest.NewRecorder()
 
-	createUserBody := generateCreateUserResponseFromDBRecord(dbUser, randomPassword)
+	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
 
 	requestBody, err := json.Marshal(createUserBody)
 	assert.NoError(t, err, "No error must be")
@@ -172,6 +299,32 @@ func TestMicroservice_CreateUser_Conflict_UserExist(t *testing.T) {
 
 	ms.router.ServeHTTP(recorder, request)
 	assert.Equal(t, http.StatusConflict, recorder.Code, "response [ status code ] must be equal")
+}
+
+func testMicroserviceLoginUserMockDB(store *mockdatabase.MockStore, dbUser database.RootUser) {
+	store.EXPECT().
+		GetUserByUsername(
+			gomock.Any(),
+			gomock.Eq(dbUser.Username),
+		).Times(1).
+		Return(dbUser, nil)
+}
+
+func testMicroserviceLoginUserUnauthorizedErrorUserNotExistMockDB(store *mockdatabase.MockStore, dbUser database.RootUser) {
+	store.EXPECT().
+		GetUserByUsername(
+			gomock.Any(),
+			gomock.Eq(dbUser.Username),
+		).Times(1).
+		Return(database.RootUser{}, sql.ErrNoRows)
+}
+func testMicroserviceLoginUserInternalErrorErrorGetUserByUsernameMockDB(store *mockdatabase.MockStore, dbUser database.RootUser) {
+	store.EXPECT().
+		GetUserByUsername(
+			gomock.Any(),
+			gomock.Eq(dbUser.Username),
+		).Times(1).
+		Return(database.RootUser{}, errors.New("unexpected error"))
 }
 
 func testMicroserviceCreateUserMockDB(store *mockdatabase.MockStore, dbUser database.RootUser) {
@@ -267,8 +420,26 @@ func checkResponseCreateUser(t *testing.T, requestBody CreateUserRequest, respon
 	assert.NoError(t, utils.PasswordEquality(requestBody.Password, dbUser.Password), "user [ password ] must be equal")
 }
 
-func generateCreateUserResponseFromDBRecord(dbUser database.RootUser, password string) CreateUserRequest {
+func checkResponseLoginUser(t *testing.T, responseBody *bytes.Buffer) {
+	data, err := io.ReadAll(responseBody)
+	assert.NoError(t, err, "No error must be")
+
+	var loginResponse LoginUserResponse
+	err = json.Unmarshal(data, &loginResponse)
+	assert.NoError(t, err, "No error must be")
+
+	assert.NotEmpty(t, loginResponse.Token, "Token must not be empty")
+}
+
+func generateCreateUserRequestFromDBRecord(dbUser database.RootUser, password string) CreateUserRequest {
 	return CreateUserRequest{
+		Username: dbUser.Username,
+		Password: password,
+	}
+}
+
+func generateLoginUserRequestFromDBRecord(dbUser database.RootUser, password string) LoginUserRequest {
+	return LoginUserRequest{
 		Username: dbUser.Username,
 		Password: password,
 	}
