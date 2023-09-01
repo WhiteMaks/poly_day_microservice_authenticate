@@ -8,8 +8,8 @@ EXPOSE 8080
 
 ENV WORK_PATH=/usr/poly_day
 
-COPY entrypoint.sh $WORK_PATH/
-COPY ../.bin/authenticate/poly_day_microservice_authenticate $WORK_PATH/
+COPY ./docker/entrypoint.sh $WORK_PATH/
+COPY ./.bin/authenticate/poly_day_microservice_authenticate $WORK_PATH/
 
 WORKDIR $WORK_PATH
 
