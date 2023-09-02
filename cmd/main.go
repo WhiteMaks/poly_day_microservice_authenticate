@@ -27,7 +27,7 @@ func main() {
 	store := database.NewStore(connection)
 	ms := microservice.NewMs(store)
 
-	err = ms.Start("localhost:" + appPort)
+	err = ms.Start("0.0.0.0:" + appPort)
 	if err != nil {
 		log.Fatalf("error start microservice: %v", err)
 	}
