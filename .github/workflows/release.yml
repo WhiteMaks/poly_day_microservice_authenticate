@@ -51,9 +51,6 @@ jobs:
       - name: Push docker tag
         run: docker push ${{secrets.DOCKER_USERNAME}}/poly_day_microservice_authenticate:${{github.ref_name}}
 
-      - name: Go to database folder
-        run: cd ./database
-
       - name: Build docker image for migrator
         run: docker build -t ${{secrets.DOCKER_USERNAME}}/poly_day_microservice_authenticate_migrator:${{github.ref_name}} ./database/ -f database/Dockerfile
 
