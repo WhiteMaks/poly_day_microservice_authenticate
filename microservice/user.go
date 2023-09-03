@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/utils"
@@ -48,7 +47,6 @@ func (ms *Microservice) checkUser(ctx *gin.Context) {
 
 	_, err := ms.tokenCreator.Verify(token)
 	if err != nil {
-		log.Println(err)
 		ctx.JSON(http.StatusOK, response)
 		return
 	}

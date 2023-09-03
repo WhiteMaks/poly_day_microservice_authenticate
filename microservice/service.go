@@ -25,6 +25,7 @@ func NewMs(store database.Store) *Microservice {
 
 	router.GET(PathCheckUser, ms.checkUser)
 
+	router.Use(CORSMiddleware())
 	router.POST(PathCreateUser, ms.createUser)
 	router.POST(PathLoginUser, ms.loginUser)
 
@@ -41,4 +42,21 @@ func (ms *Microservice) Start(address string) error {
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Header("Access-Control-Allow-Methods", "POST,HEAD,PATCH,OPTIONS,GET,PUT")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }
