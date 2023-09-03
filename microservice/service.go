@@ -25,9 +25,9 @@ func NewMs(store database.Store) *Microservice {
 
 	router.GET(PathCheckUser, ms.checkUser)
 
+	router.Use(CORSMiddleware())
 	router.POST(PathCreateUser, ms.createUser)
 	router.POST(PathLoginUser, ms.loginUser)
-	router.Use(CORSMiddleware())
 
 	ms.store = store
 	ms.router = router
