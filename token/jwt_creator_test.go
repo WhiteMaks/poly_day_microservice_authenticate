@@ -39,5 +39,5 @@ func TestJWTCreator_ExpiredToken(t *testing.T) {
 	payload, err := creator.Verify(token)
 	assert.Error(t, err, "No error must be")
 	assert.EqualError(t, err, ErrExpiredToken.Error(), "Error message must be equals")
-	assert.Nil(t, payload, "Payload must not be nil")
+	assert.Nil(t, payload, "Payload must be nil")
 }
