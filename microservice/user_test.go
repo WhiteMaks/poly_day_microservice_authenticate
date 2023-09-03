@@ -22,6 +22,71 @@ var developerRole = database.RootRole{
 	Name: "ROLE_DEVELOPER",
 }
 
+func TestMicroservice_CheckUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mockdatabase.NewMockStore(ctrl)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	expectedUsername := utils.RandomString(25)
+	duration := time.Minute
+
+	generatedToken, err := ms.tokenCreator.Create(expectedUsername, duration)
+	assert.NoError(t, err, "No error must be")
+	assert.NotEmpty(t, generatedToken, "Token must not be empty")
+
+	request, err := http.NewRequest(http.MethodGet, PathCheckUser, nil)
+	assert.NoError(t, err, "No error must be")
+
+	request.Header.Add("Authorization", generatedToken)
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusOK, recorder.Code, "response [ status code ] must be equal")
+
+	checkResponseCheckUser(t, recorder.Body, true)
+}
+
+func TestMicroservice_CheckUser_InvalidToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mockdatabase.NewMockStore(ctrl)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	request, err := http.NewRequest(http.MethodGet, PathCheckUser, nil)
+	assert.NoError(t, err, "No error must be")
+
+	request.Header.Add("Authorization", "invalid_token")
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusOK, recorder.Code, "response [ status code ] must be equal")
+
+	checkResponseCheckUser(t, recorder.Body, false)
+}
+
+func TestMicroservice_CheckUser_EmptyAuthorizationHeader(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mockdatabase.NewMockStore(ctrl)
+
+	ms := NewMs(store)
+	recorder := httptest.NewRecorder()
+
+	request, err := http.NewRequest(http.MethodGet, PathCheckUser, nil)
+	assert.NoError(t, err, "No error must be")
+
+	ms.router.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusOK, recorder.Code, "response [ status code ] must be equal")
+
+	checkResponseCheckUser(t, recorder.Body, false)
+}
+
 func TestMicroservice_LoginUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -429,6 +494,17 @@ func checkResponseLoginUser(t *testing.T, responseBody *bytes.Buffer) {
 	assert.NoError(t, err, "No error must be")
 
 	assert.NotEmpty(t, loginResponse.Token, "Token must not be empty")
+}
+
+func checkResponseCheckUser(t *testing.T, responseBody *bytes.Buffer, authorized bool) {
+	data, err := io.ReadAll(responseBody)
+	assert.NoError(t, err, "No error must be")
+
+	var checkResponse CheckUserResponse
+	err = json.Unmarshal(data, &checkResponse)
+	assert.NoError(t, err, "No error must be")
+
+	assert.Equal(t, authorized, checkResponse.Authorized, "Authorized must be equals")
 }
 
 func generateCreateUserRequestFromDBRecord(dbUser database.RootUser, password string) CreateUserRequest {

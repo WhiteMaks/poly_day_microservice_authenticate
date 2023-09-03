@@ -9,6 +9,7 @@ import (
 const (
 	PathCreateUser = "/user/create"
 	PathLoginUser  = "/user/login"
+	PathCheckUser  = "/user/check"
 )
 
 type Microservice struct {
@@ -21,6 +22,9 @@ func NewMs(store database.Store) *Microservice {
 	ms := &Microservice{}
 
 	router := gin.New()
+
+	router.GET(PathCheckUser, ms.checkUser)
+
 	router.POST(PathCreateUser, ms.createUser)
 	router.POST(PathLoginUser, ms.loginUser)
 

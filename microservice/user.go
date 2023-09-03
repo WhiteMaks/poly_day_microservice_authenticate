@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/utils"
@@ -28,7 +29,34 @@ type LoginUserResponse struct {
 	Token string `json:"token"`
 }
 
+type CheckUserResponse struct {
+	Authorized bool `json:"authorized"`
+}
+
 var ErrAuthorizationDataNotValid = errors.New("authorization data is not correct")
+
+func (ms *Microservice) checkUser(ctx *gin.Context) {
+	response := CheckUserResponse{
+		Authorized: false,
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if len(token) == 0 {
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	_, err := ms.tokenCreator.Verify(token)
+	if err != nil {
+		log.Println(err)
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	response.Authorized = true
+
+	ctx.JSON(http.StatusOK, response)
+}
 
 func (ms *Microservice) loginUser(ctx *gin.Context) {
 	var requestBody LoginUserRequest
