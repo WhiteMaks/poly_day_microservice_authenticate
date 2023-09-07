@@ -19,6 +19,13 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: Setup SSH
+        uses: MrSquaare/ssh-setup-action@v1
+        with:
+          host: github.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: git config --global url."ssh://git@github.com".insteadOf "https://github.com"
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
