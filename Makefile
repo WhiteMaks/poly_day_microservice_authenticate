@@ -20,6 +20,7 @@ test:
 	go clean -testcache && go test -cover -v ./...
 
 build:
+	git config --global url."ssh://git@github.com".insteadOf "https://github.com"
 	go build -o ./.bin/authenticate/poly_day_microservice_authenticate cmd/main.go
 
 .PHONY: build test migrate-db up-test-environment autogenerate-mock autogenerate-code install-dependencies
