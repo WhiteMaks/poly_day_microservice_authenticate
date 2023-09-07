@@ -22,4 +22,7 @@ test:
 build:
 	go build -o ./.bin/authenticate/poly_day_microservice_authenticate cmd/main.go
 
-.PHONY: build test migrate-db up-test-environment autogenerate-mock autogenerate-code install-dependencies
+setup-git:
+	git config --global url."ssh://git@github.com".insteadOf "https://github.com"
+
+.PHONY: build test migrate-db up-test-environment autogenerate-mock autogenerate-code install-dependencies setup-git
