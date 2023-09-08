@@ -1,6 +1,7 @@
 package microservice
 
 import (
+	"github.com/WhiteMaks/poly_day_bus_schema/wbus"
 	"github.com/gin-gonic/gin"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/token"
@@ -16,19 +17,20 @@ type Microservice struct {
 	store        database.Store
 	tokenCreator token.Creator
 	router       *gin.Engine
+	bus          *wbus.Rabbit
 }
 
-func NewMs(store database.Store) *Microservice {
+func NewMs(store database.Store, bus *wbus.Rabbit) *Microservice {
 	ms := &Microservice{}
 
 	router := gin.New()
 
 	router.GET(PathCheckUser, ms.checkUser)
 
-	router.Use(CORSMiddleware())
 	router.POST(PathCreateUser, ms.createUser)
 	router.POST(PathLoginUser, ms.loginUser)
 
+	ms.bus = bus
 	ms.store = store
 	ms.router = router
 	ms.tokenCreator = token.NewJWTCreator("secret_key_for_generate_token")
@@ -42,21 +44,4 @@ func (ms *Microservice) Start(address string) error {
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
-}
-
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Header("Access-Control-Allow-Methods", "POST,HEAD,PATCH,OPTIONS,GET,PUT")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
 }

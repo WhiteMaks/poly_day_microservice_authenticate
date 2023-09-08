@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"github.com/WhiteMaks/poly_day_bus_schema/schema"
 	"github.com/WhiteMaks/poly_day_bus_schema/wbus"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -16,11 +17,10 @@ var (
 	psqlConStr   = os.Getenv("POSTGRES_CONNECTING_STRING")
 	rabbitConStr = os.Getenv("RABBIT_CONNECTING_STRING")
 	appPort      = os.Getenv("APP_PORT")
-	msName       = os.Getenv("MICROSERVICE_NAME")
 )
 
 func main() {
-	bus := wbus.NewRabbit(msName)
+	bus := wbus.NewRabbit(schema.PathMsAuthenticate)
 	err := bus.Start(rabbitConStr)
 	if err != nil {
 		log.Fatalf("error start wbus: %v", err)
@@ -35,7 +35,7 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 
-	ms := microservice.NewMs(store)
+	ms := microservice.NewMs(store, bus)
 	err = ms.Start("0.0.0.0:" + appPort)
 	if err != nil {
 		log.Fatalf("error start microservice: %v", err)

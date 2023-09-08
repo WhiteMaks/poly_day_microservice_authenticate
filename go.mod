@@ -3,7 +3,7 @@ module poly_day_microservice_authenticate
 go 1.21.0
 
 require (
-	github.com/WhiteMaks/poly_day_bus_schema v0.0.0-20230907134552-0bf16b1c8fe4
+	github.com/WhiteMaks/poly_day_bus_schema v0.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang/mock v1.6.0
