@@ -14,3 +14,13 @@ services:
       - .:/var/lib/postgresql/data
     ports:
       - "15432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: poly_day_microservice_authenticate_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+    ports:
+      - "5672:5672"
+      - "15672:15672"

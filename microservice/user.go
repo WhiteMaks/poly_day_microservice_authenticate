@@ -3,7 +3,9 @@ package microservice
 import (
 	"database/sql"
 	"errors"
+	"github.com/WhiteMaks/poly_day_bus_schema/schema"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"poly_day_microservice_authenticate/autogenerate/database"
 	"poly_day_microservice_authenticate/utils"
@@ -146,6 +148,16 @@ func (ms *Microservice) createUser(ctx *gin.Context) {
 
 	response := CreateUserResponse{
 		Id: dbUser.ID,
+	}
+
+	message, err := schema.GenerateMessageForUserCreated10(dbUser.ID, dbRole.Name)
+	if err != nil {
+		log.Printf("error generate event user-created 1.0: %v", err)
+	}
+
+	err = ms.bus.SendMessageInExchange(schema.PathEventAuthenticateUserCreated10, message)
+	if err != nil {
+		log.Printf("error send event user-created 1.0: %v", err)
 	}
 
 	ctx.JSON(http.StatusCreated, response)

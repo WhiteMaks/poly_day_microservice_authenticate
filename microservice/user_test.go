@@ -28,7 +28,7 @@ func TestMicroservice_CheckUser(t *testing.T) {
 
 	store := mockdatabase.NewMockStore(ctrl)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	expectedUsername := utils.RandomString(25)
@@ -55,7 +55,7 @@ func TestMicroservice_CheckUser_InvalidToken(t *testing.T) {
 
 	store := mockdatabase.NewMockStore(ctrl)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	request, err := http.NewRequest(http.MethodGet, PathCheckUser, nil)
@@ -75,7 +75,7 @@ func TestMicroservice_CheckUser_EmptyAuthorizationHeader(t *testing.T) {
 
 	store := mockdatabase.NewMockStore(ctrl)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	request, err := http.NewRequest(http.MethodGet, PathCheckUser, nil)
@@ -98,7 +98,7 @@ func TestMicroservice_LoginUser(t *testing.T) {
 
 	testMicroserviceLoginUserMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requestBody, err := json.Marshal(loginUserBody)
@@ -124,7 +124,7 @@ func TestMicroservice_LoginUser_Unauthorized_WithNotValidPassword(t *testing.T) 
 
 	testMicroserviceLoginUserMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requestBody, err := json.Marshal(loginUserBody)
@@ -148,7 +148,7 @@ func TestMicroservice_LoginUser_Unauthorized_WithNotValidUsername(t *testing.T) 
 
 	testMicroserviceLoginUserUnauthorizedErrorUserNotExistMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requestBody, err := json.Marshal(loginUserBody)
@@ -172,7 +172,7 @@ func TestMicroservice_LoginUser_InternalError_ErrorInGetUserByUsername(t *testin
 
 	testMicroserviceLoginUserInternalErrorErrorGetUserByUsernameMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requestBody, err := json.Marshal(loginUserBody)
@@ -190,7 +190,7 @@ func TestMicroservice_LoginUser_BudRequest_WrongJsonBody(t *testing.T) {
 	defer ctrl.Finish()
 
 	store := mockdatabase.NewMockStore(ctrl)
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requests := []struct {
@@ -225,7 +225,7 @@ func TestMicroservice_CreateUser(t *testing.T) {
 
 	testMicroserviceCreateUserMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requestBody, err := json.Marshal(createUserBody)
@@ -249,7 +249,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetUserByUsername(t *testi
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorGetUserByUsernameMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
@@ -273,7 +273,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInGetRoleByName(t *testing.T
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorGetRoleByNameMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
@@ -297,7 +297,7 @@ func TestMicroservice_CreateUser_InternalError_ErrorInCreateUser(t *testing.T) {
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserInternalErrorErrorCreateUserMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
@@ -317,7 +317,7 @@ func TestMicroservice_CreateUser_BudRequest_WrongJsonBody(t *testing.T) {
 	defer ctrl.Finish()
 
 	store := mockdatabase.NewMockStore(ctrl)
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	requests := []struct {
@@ -351,7 +351,7 @@ func TestMicroservice_CreateUser_Conflict_UserExist(t *testing.T) {
 	store := mockdatabase.NewMockStore(ctrl)
 	testMicroserviceCreateUserConflictUserExistMockDB(store, dbUser)
 
-	ms := NewMs(store)
+	ms := newMs(store)
 	recorder := httptest.NewRecorder()
 
 	createUserBody := generateCreateUserRequestFromDBRecord(dbUser, randomPassword)
