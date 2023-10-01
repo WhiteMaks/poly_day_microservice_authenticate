@@ -172,30 +172,37 @@ func checkExistDBRowError(err error) (bool, error) {
 	return true, err
 }
 
-func (ms *Microservice) identify10(message schema.Message) {
+func (ms *Microservice) identifyUser10(message schema.Message) {
 	request, err := schema.GetIdentifyUser10RequestFromMessage(message)
 	if err != nil {
-		//todo send error response
+		//todo send error response 4000
 		return
 	}
 
 	payload, err := ms.tokenCreator.Verify(request.Token)
 	if err != nil {
-		//todo send error response because not authorized
+		//todo send error response because not authorized 4010
 		return
 	}
 
 	dbUser, err := ms.store.GetUserByUsername(context.Background(), payload.Username)
 	if err != nil {
-		//todo send error response because not authorized
+		//todo send error response because not authorized 4010
 		return
 	}
 
 	response, err := schema.GenerateMessageForIdentifyUser10Response(dbUser.ID)
 	if err != nil {
-		//todo send internal error response
+		//todo send internal error response 5000
 		return
 	}
+
+	response.Meta = schema.Meta{
+		WsId:   message.Meta.WsId,
+		UserId: dbUser.ID,
+	}
+
+	response.ResponseId = message.RequestId
 
 	err = ms.bus.SendMessageInQueue(message.FromMicroservice, response)
 	log.Printf("send message error: %v", err)

@@ -34,7 +34,7 @@ func NewMs(store database.Store, bus *wbus.Rabbit) *Microservice {
 	ms.bus = bus
 	ms.store = store
 	ms.router = router
-	ms.tokenCreator = token.NewJWTCreator("secret_key_for_generate_token")
+	ms.tokenCreator = token.NewJWTCreator("secret_key_for_generate_token") //todo получать секретный ключ из конфига
 
 	return ms
 }
@@ -61,12 +61,12 @@ func (ms *Microservice) rootMessageHandler(message schema.Message) {
 	methodName := generateFullMethodNameFromMessage(message)
 
 	if methodName == schema.CommandIdentifyUser10 {
-		go ms.identify10(message)
+		go ms.identifyUser10(message)
 		return
 	}
 
 }
 
-func generateFullMethodNameFromMessage(message schema.Message) string {
+func generateFullMethodNameFromMessage(message schema.Message) string { //todo вынести метод в bus schema
 	return message.Method + "-" + message.Version
 }
