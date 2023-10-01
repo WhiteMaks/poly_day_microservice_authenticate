@@ -203,6 +203,8 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 	}
 
 	response.ResponseId = message.RequestId
+	response.FromMicroservice = ms.bus.Name
+	response.ToMicroservice = message.FromMicroservice
 
 	err = ms.bus.SendMessageInQueue(message.FromMicroservice, response)
 	log.Printf("send message error: %v", err)
