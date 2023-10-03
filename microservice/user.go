@@ -173,10 +173,13 @@ func checkExistDBRowError(err error) (bool, error) {
 }
 
 func (ms *Microservice) identifyUser10(message schema.Message) {
+	errorMsg := schema.Message{
+		Version: schema.Version10,
+		Method:  schema.CommandIdentifyUser,
+	}
+
 	request, err := schema.GetIdentifyUser10RequestFromMessage(message)
 	if err != nil {
-		errorMsg := schema.Message{}
-
 		schema.FillMessageForSend(
 			message.RequestId,
 			ms.bus.Name,
@@ -191,8 +194,6 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 
 	payload, err := ms.tokenCreator.Verify(request.Token)
 	if err != nil {
-		errorMsg := schema.Message{}
-
 		schema.FillMessageForSend(
 			message.RequestId,
 			ms.bus.Name,
@@ -207,8 +208,6 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 
 	dbUser, err := ms.store.GetUserByUsername(context.Background(), payload.Username)
 	if err != nil {
-		errorMsg := schema.Message{}
-
 		schema.FillMessageForSend(
 			message.RequestId,
 			ms.bus.Name,
@@ -223,8 +222,6 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 
 	response, err := schema.GenerateMessageForIdentifyUser10Response(dbUser.ID)
 	if err != nil {
-		errorMsg := schema.Message{}
-
 		schema.FillMessageForSend(
 			message.RequestId,
 			ms.bus.Name,
