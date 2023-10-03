@@ -1,6 +1,7 @@
 package microservice
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/WhiteMaks/poly_day_bus_schema/schema"
@@ -169,4 +170,82 @@ func checkExistDBRowError(err error) (bool, error) {
 	}
 
 	return true, err
+}
+
+func (ms *Microservice) identifyUser10(message schema.Message) {
+	errorMsg := schema.Message{
+		Version: schema.Version10,
+		Method:  schema.CommandIdentifyUser,
+	}
+
+	request, err := schema.GetIdentifyUser10RequestFromMessage(message)
+	if err != nil {
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.BAD_REQUEST,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
+		return
+	}
+
+	payload, err := ms.tokenCreator.Verify(request.Token)
+	if err != nil {
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.AUTHORIZED,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
+		return
+	}
+
+	dbUser, err := ms.store.GetUserByUsername(context.Background(), payload.Username)
+	if err != nil {
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.AUTHORIZED,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
+		return
+	}
+
+	response, err := schema.GenerateMessageForIdentifyUser10Response(dbUser.ID)
+	if err != nil {
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.INTERNAL_ERROR,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
+		return
+	}
+
+	response.Meta = schema.Meta{
+		WsId:   message.Meta.WsId,
+		UserId: dbUser.ID,
+	}
+
+	schema.FillMessageForSend(
+		message.RequestId,
+		ms.bus.Name,
+		message.FromMicroservice,
+		schema.OK,
+		&response,
+	)
+
+	ms.bus.SendMessage(response)
 }
