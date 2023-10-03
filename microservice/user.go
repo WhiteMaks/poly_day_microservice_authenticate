@@ -175,25 +175,65 @@ func checkExistDBRowError(err error) (bool, error) {
 func (ms *Microservice) identifyUser10(message schema.Message) {
 	request, err := schema.GetIdentifyUser10RequestFromMessage(message)
 	if err != nil {
-		//todo send error response 4000
+		errorMsg := schema.Message{}
+
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.BAD_REQUEST,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
 		return
 	}
 
 	payload, err := ms.tokenCreator.Verify(request.Token)
 	if err != nil {
-		//todo send error response because not authorized 4010
+		errorMsg := schema.Message{}
+
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.AUTHORIZED,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
 		return
 	}
 
 	dbUser, err := ms.store.GetUserByUsername(context.Background(), payload.Username)
 	if err != nil {
-		//todo send error response because not authorized 4010
+		errorMsg := schema.Message{}
+
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.AUTHORIZED,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
 		return
 	}
 
 	response, err := schema.GenerateMessageForIdentifyUser10Response(dbUser.ID)
 	if err != nil {
-		//todo send internal error response 5000
+		errorMsg := schema.Message{}
+
+		schema.FillMessageForSend(
+			message.RequestId,
+			ms.bus.Name,
+			message.FromMicroservice,
+			schema.INTERNAL_ERROR,
+			&errorMsg,
+		)
+
+		ms.bus.SendMessage(errorMsg)
 		return
 	}
 
@@ -202,10 +242,13 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 		UserId: dbUser.ID,
 	}
 
-	response.ResponseId = message.RequestId
-	response.FromMicroservice = ms.bus.Name
-	response.ToMicroservice = message.FromMicroservice
+	schema.FillMessageForSend(
+		message.RequestId,
+		ms.bus.Name,
+		message.FromMicroservice,
+		schema.OK,
+		&response,
+	)
 
-	err = ms.bus.SendMessageInQueue(message.FromMicroservice, response)
-	log.Printf("send message error: %v", err)
+	ms.bus.SendMessage(response)
 }

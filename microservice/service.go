@@ -58,15 +58,11 @@ func errorResponse(err error) gin.H {
 }
 
 func (ms *Microservice) rootMessageHandler(message schema.Message) {
-	methodName := generateFullMethodNameFromMessage(message)
+	methodName := schema.GenerateFullMethodNameFromMessage(message)
 
 	if methodName == schema.CommandIdentifyUser10 {
 		go ms.identifyUser10(message)
 		return
 	}
 
-}
-
-func generateFullMethodNameFromMessage(message schema.Message) string { //todo вынести метод в bus schema
-	return message.Method + "-" + message.Version
 }
