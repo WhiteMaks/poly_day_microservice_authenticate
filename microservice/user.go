@@ -219,31 +219,48 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 }
 
 func (ms *Microservice) getDevelopers10(message schema.Message) {
-	//	responseMessage := schema.GenerateResponseMessage(message)
-	//
-	//	requestBody, err := schema.GetGetDevelopers10RequestFromMessage(message)
-	//	if err != nil {
-	//		schema.FillStatusForMessage(&responseMessage, schema.BAD_REQUEST)
-	//		ms.bus.SendMessage(responseMessage)
-	//		return
-	//	}
-	//
-	//	dbRole, err := ms.store.GetRoleByName(context.Background(), ROLE_DEVELOPER)
-	//	if err != nil {
-	//		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
-	//		ms.bus.SendMessage(responseMessage)
-	//		return
-	//	}
-	//
-	//	var developersBody []schema.Developer
-	//
-	//	err = schema.FillBodyGetDevelopers10ResponseForMessage(developersBody, &responseMessage)
-	//	if err != nil {
-	//		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
-	//		ms.bus.SendMessage(responseMessage)
-	//		return
-	//	}
-	//
-	//	schema.FillStatusForMessage(&responseMessage, schema.OK)
-	//	ms.bus.SendMessage(responseMessage)
+	responseMessage := schema.GenerateResponseMessage(message)
+
+	requestBody, err := schema.GetGetDevelopers10RequestFromMessage(message)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.BAD_REQUEST)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	dbRole, err := ms.store.GetRoleByName(context.Background(), ROLE_DEVELOPER)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	argsForFindDevelopers := database.GetUsersByRoleIdAndIdFromParams{
+		RoleID: dbRole.ID,
+		ID:     requestBody.FromUserId,
+	}
+
+	dbDevelopers, err := ms.store.GetUsersByRoleIdAndIdFrom(context.Background(), argsForFindDevelopers)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	developersBody := make([]schema.Developer, len(dbDevelopers))
+	for i, value := range dbDevelopers {
+		developersBody[i] = schema.Developer{
+			UserId: value.ID,
+		}
+	}
+
+	err = schema.FillBodyGetDevelopers10ResponseForMessage(developersBody, &responseMessage)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	schema.FillStatusForMessage(&responseMessage, schema.OK)
+	ms.bus.SendMessage(responseMessage)
 }
