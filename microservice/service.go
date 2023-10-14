@@ -61,9 +61,20 @@ func errorResponse(err error) gin.H {
 func (ms *Microservice) rootMessageHandler(message schema.Message) {
 	methodName := schema.GenerateFullMethodNameFromMessage(message)
 
-	if methodName == schema.CommandIdentifyUser10 {
-		go ms.identifyUser10(message)
-		return
+	switch methodName {
+
+	case schema.CommandIdentifyUser10:
+		{
+			go ms.identifyUser10(message)
+			break
+		}
+
+	case schema.CommandGetDevelopers10:
+		{
+			go ms.getDevelopers10(message)
+			break
+		}
+
 	}
 
 }
