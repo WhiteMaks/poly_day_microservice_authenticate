@@ -13,3 +13,13 @@ FROM
 WHERE
     username = $1
 LIMIT 1;
+
+-- name: GetUsersByRoleIdAndIdFrom :many
+SELECT
+    *
+FROM
+    root.users
+WHERE
+    role_id = $1
+AND
+    id > $2;
