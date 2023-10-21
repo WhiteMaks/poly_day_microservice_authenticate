@@ -188,14 +188,14 @@ func (ms *Microservice) identifyUser10(message schema.Message) {
 
 	tokenPayload, err := ms.tokenCreator.Verify(requestBody.Token)
 	if err != nil {
-		schema.FillStatusForMessage(&responseMessage, schema.AUTHORIZED)
+		schema.FillStatusForMessage(&responseMessage, schema.NOT_AUTHORIZED)
 		ms.bus.SendMessage(responseMessage)
 		return
 	}
 
 	dbUser, err := ms.store.GetUserByUsername(context.Background(), tokenPayload.Username)
 	if err != nil {
-		schema.FillStatusForMessage(&responseMessage, schema.AUTHORIZED)
+		schema.FillStatusForMessage(&responseMessage, schema.NOT_AUTHORIZED)
 		ms.bus.SendMessage(responseMessage)
 		return
 	}
