@@ -25,6 +25,7 @@ func NewMs(store database.Store, bus *wbus.Rabbit) *Microservice {
 	ms := &Microservice{}
 
 	router := gin.New()
+	router.Use(CORSMiddleware())
 
 	router.GET(PathCheckUser, ms.checkUser)
 
@@ -60,9 +61,37 @@ func errorResponse(err error) gin.H {
 func (ms *Microservice) rootMessageHandler(message schema.Message) {
 	methodName := schema.GenerateFullMethodNameFromMessage(message)
 
-	if methodName == schema.CommandIdentifyUser10 {
-		go ms.identifyUser10(message)
-		return
+	switch methodName {
+
+	case schema.CommandIdentifyUser10:
+		{
+			go ms.identifyUser10(message)
+			break
+		}
+
+	case schema.CommandGetDevelopers10:
+		{
+			go ms.getDevelopers10(message)
+			break
+		}
+
 	}
 
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Header("Access-Control-Allow-Methods", "POST, HEAD, PATCH, OPTIONS, GET, PUT")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }

@@ -37,6 +37,10 @@ type CheckUserResponse struct {
 
 var ErrAuthorizationDataNotValid = errors.New("authorization data is not correct")
 
+const (
+	ROLE_DEVELOPER = "ROLE_DEVELOPER"
+)
+
 func (ms *Microservice) checkUser(ctx *gin.Context) {
 	response := CheckUserResponse{
 		Authorized: false,
@@ -123,7 +127,7 @@ func (ms *Microservice) createUser(ctx *gin.Context) {
 		return
 	}
 
-	dbRole, err := ms.store.GetRoleByName(ctx, "ROLE_DEVELOPER")
+	dbRole, err := ms.store.GetRoleByName(ctx, ROLE_DEVELOPER)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -173,79 +177,90 @@ func checkExistDBRowError(err error) (bool, error) {
 }
 
 func (ms *Microservice) identifyUser10(message schema.Message) {
-	errorMsg := schema.Message{
-		Version: schema.Version10,
-		Method:  schema.CommandIdentifyUser,
-	}
+	responseMessage := schema.GenerateResponseMessage(message)
 
-	request, err := schema.GetIdentifyUser10RequestFromMessage(message)
+	requestBody, err := schema.GetIdentifyUser10RequestFromMessage(message)
 	if err != nil {
-		schema.FillMessageForSend(
-			message.RequestId,
-			ms.bus.Name,
-			message.FromMicroservice,
-			schema.BAD_REQUEST,
-			&errorMsg,
-		)
-
-		ms.bus.SendMessage(errorMsg)
+		schema.FillStatusForMessage(&responseMessage, schema.BAD_REQUEST)
+		ms.bus.SendMessage(responseMessage)
 		return
 	}
 
-	payload, err := ms.tokenCreator.Verify(request.Token)
+	tokenPayload, err := ms.tokenCreator.Verify(requestBody.Token)
 	if err != nil {
-		schema.FillMessageForSend(
-			message.RequestId,
-			ms.bus.Name,
-			message.FromMicroservice,
-			schema.AUTHORIZED,
-			&errorMsg,
-		)
-
-		ms.bus.SendMessage(errorMsg)
+		schema.FillStatusForMessage(&responseMessage, schema.NOT_AUTHORIZED)
+		ms.bus.SendMessage(responseMessage)
 		return
 	}
 
-	dbUser, err := ms.store.GetUserByUsername(context.Background(), payload.Username)
+	dbUser, err := ms.store.GetUserByUsername(context.Background(), tokenPayload.Username)
 	if err != nil {
-		schema.FillMessageForSend(
-			message.RequestId,
-			ms.bus.Name,
-			message.FromMicroservice,
-			schema.AUTHORIZED,
-			&errorMsg,
-		)
-
-		ms.bus.SendMessage(errorMsg)
+		schema.FillStatusForMessage(&responseMessage, schema.NOT_AUTHORIZED)
+		ms.bus.SendMessage(responseMessage)
 		return
 	}
 
-	response, err := schema.GenerateMessageForIdentifyUser10Response(dbUser.ID)
+	err = schema.FillBodyIdentifyUser10ResponseForMessage(dbUser.ID, &responseMessage)
 	if err != nil {
-		schema.FillMessageForSend(
-			message.RequestId,
-			ms.bus.Name,
-			message.FromMicroservice,
-			schema.INTERNAL_ERROR,
-			&errorMsg,
-		)
-
-		ms.bus.SendMessage(errorMsg)
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
 		return
 	}
 
-	response.Meta = schema.Meta{
+	metaBody := schema.Meta{
 		WsId:   message.Meta.WsId,
 		UserId: dbUser.ID,
 	}
 
-	schema.FillMessageForSend(
-		message.RequestId,
-		ms.bus.Name,
-		message.FromMicroservice,
-		schema.OK,
-		&response,
-	)
+	schema.FillMetaForMessage(&responseMessage, metaBody)
 
-	ms.bus.SendMessage(response)
+	schema.FillStatusForMessage(&responseMessage, schema.OK)
+	ms.bus.SendMessage(responseMessage)
+}
+
+func (ms *Microservice) getDevelopers10(message schema.Message) {
+	responseMessage := schema.GenerateResponseMessage(message)
+
+	requestBody, err := schema.GetGetDevelopers10RequestFromMessage(message)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.BAD_REQUEST)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	dbRole, err := ms.store.GetRoleByName(context.Background(), ROLE_DEVELOPER)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	argsForFindDevelopers := database.GetUsersByRoleIdAndIdFromParams{
+		RoleID: dbRole.ID,
+		ID:     requestBody.FromUserId,
+	}
+
+	dbDevelopers, err := ms.store.GetUsersByRoleIdAndIdFrom(context.Background(), argsForFindDevelopers)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	developersBody := make([]schema.Developer, len(dbDevelopers))
+	for i, value := range dbDevelopers {
+		developersBody[i] = schema.Developer{
+			UserId: value.ID,
+		}
+	}
+
+	err = schema.FillBodyGetDevelopers10ResponseForMessage(developersBody, &responseMessage)
+	if err != nil {
+		schema.FillStatusForMessage(&responseMessage, schema.INTERNAL_ERROR)
+		ms.bus.SendMessage(responseMessage)
+		return
+	}
+
+	schema.FillStatusForMessage(&responseMessage, schema.OK)
+	ms.bus.SendMessage(responseMessage)
 }

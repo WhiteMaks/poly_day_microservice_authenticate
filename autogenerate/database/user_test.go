@@ -55,6 +55,40 @@ func TestQueries_GetUserByUsername_WithNotExistValue(t *testing.T) {
 	assert.Empty(t, notExistUser, "User must be empty")
 }
 
+func TestQueries_GetUsersByRoleIdAndIdFrom(t *testing.T) {
+	randomUser := generateRandomDBUserParams()
+
+	expectedUser, err := testQueries.CreateUser(context.Background(), randomUser)
+	assert.NoError(t, err, "No error must be")
+
+	args := GetUsersByRoleIdAndIdFromParams{
+		RoleID: randomUser.RoleID,
+		ID:     expectedUser.ID - 1,
+	}
+
+	actualUsers, err := testQueries.GetUsersByRoleIdAndIdFrom(context.Background(), args)
+	assert.NoError(t, err, "No error must be")
+	assert.Equal(t, 1, len(actualUsers), "User must be found")
+
+	checkUsers(t, expectedUser, actualUsers[0])
+}
+
+func TestQueries_GetUsersByRoleIdAndIdFrom_WithNotExistValue(t *testing.T) {
+	randomUser := generateRandomDBUserParams()
+
+	expectedUser, err := testQueries.CreateUser(context.Background(), randomUser)
+	assert.NoError(t, err, "No error must be")
+
+	args := GetUsersByRoleIdAndIdFromParams{
+		RoleID: randomUser.RoleID,
+		ID:     expectedUser.ID,
+	}
+
+	actualUsers, err := testQueries.GetUsersByRoleIdAndIdFrom(context.Background(), args)
+	assert.NoError(t, err, "No error must be")
+	assert.Equal(t, 0, len(actualUsers), "Users must not be found")
+}
+
 func checkUsers(t *testing.T, expectedUser RootUser, actualUser RootUser) {
 	assert.NotZero(t, actualUser.ID, "User [ id ] must be filled")
 	assert.NotZero(t, actualUser.CreatedAt, "User [ created_at ] must be filled")
