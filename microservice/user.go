@@ -169,7 +169,7 @@ func (ms *Microservice) createUser(ctx *gin.Context) {
 }
 
 func checkExistDBRowError(err error) (bool, error) {
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
 
@@ -249,9 +249,7 @@ func (ms *Microservice) getDevelopers10(message schema.Message) {
 
 	developersBody := make([]schema.Developer, len(dbDevelopers))
 	for i, value := range dbDevelopers {
-		developersBody[i] = schema.Developer{
-			UserId: value.ID,
-		}
+		developersBody[i] = schema.GenerateDeveloperStruct(value.ID)
 	}
 
 	err = schema.FillBodyGetDevelopers10ResponseForMessage(developersBody, &responseMessage)
